@@ -14,6 +14,7 @@
 	var FIND_SIMILARS = '/findsimilars';
 	var GET_FACE_LIST = '/facelists/' + faceListId;
 	var CHECK_CUSTOMER = '/customerinbar';
+	var COUNT_USAGE = '/countusage';
 	var faceIds = [1,2]
 
 	toastr.options = {
@@ -44,6 +45,7 @@
 				var face = res[0]
 				faceIds[0] = face.faceId;
 				var age = face.faceAttributes.age;
+				countUsage(face.faceAttributes.age + ',' +  face.faceAttributes.gender + ',' +  face.faceAttributes.glasses);
 				if(age >= 18){
 					toastr.success('', 'Age : ' + face.faceAttributes.age + ',' +  face.faceAttributes.gender + ',' +  face.faceAttributes.glasses, {timeOut: 10000});
 				} else {
@@ -83,6 +85,14 @@
 
 	}
 
+	function countUsage(faceInfo){
+		var newReq = new XMLHttpRequest();
+		newReq.open('POST', COUNT_USAGE + '?faceInfo=' + encodeURIComponent(faceInfo), true)
+		newReq.setRequestHeader('Content-Type', 'application\/json')
+		newReq.send();
+
+	}
+	
 	function checkFaceList(id){
 
 		var newReq = createRequest(GET_FACE_LIST, 'GET', function(){

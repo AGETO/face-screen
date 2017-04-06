@@ -6,6 +6,11 @@ var app = express();
 
 app.use(express.static(path.join(__dirname,'static')))
 
+app.post('/countusage', function(req,res){
+	//This is an endpoint for counting, how often a client uses the face api
+	console.log(new Date().toString() + ":" + req.url);
+})
+
 app.post('/customerinbar', function(req,res){
 	//This is your endpoint for pouring drinks
 	//If the customerid sent in exists in the orders, then drink is poured
@@ -21,6 +26,6 @@ app.post('/customerinbar', function(req,res){
 	*/
 })
 
-app.listen(3000);
+app.listen(8080);
 
-console.log('Listening on 3000')
+console.log('Listening on 8080')
