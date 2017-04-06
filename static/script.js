@@ -1,5 +1,5 @@
 
-(function(toastr, FACE_API_KEY, FACE_LIST_ID){
+(function(toastr, FACE_API_KEY, FACE_LIST_ID, EMOTION_API_KEY){
 	'use strict';
 	var hud = document.getElementById('hud');
 	var video = document.getElementById('video');
@@ -8,9 +8,12 @@
 	var canvas = document.getElementById('canvas');
 	var context = canvas.getContext('2d');
 	var faceEndpoint = 'https://westus.api.cognitive.microsoft.com/face/v1.0'
+	var emotionEndpoint = 'https://westus.api.cognitive.microsoft.com/emotion/v1.0'
 	var faceKey = FACE_API_KEY;
+	var emotionKey = EMOTION_API_KEY;
 	var faceListId = FACE_LIST_ID;
 	var DETECT = '/detect?returnFaceAttributes=age,gender,headPose,smile,facialHair,glasses'
+	var EMO_RECOGNIZE = '/recognize'
 	var FIND_SIMILARS = '/findsimilars';
 	var GET_FACE_LIST = '/facelists/' + faceListId;
 	var CHECK_CUSTOMER = '/customerinbar';
@@ -25,6 +28,7 @@
 	snapButton.addEventListener('click', function(){
 		context.drawImage(video, 0, 0, 640, 480);
 		checkFace();
+		checkEmotion();
 	})
 
 	navigator.mediaDevices.getUserMedia({video:true})
@@ -38,7 +42,7 @@
 	function checkFace(){
 		toastr.info('Checking face...');
 		//hud.className = "off";
-		var req = createRequest(DETECT, 'POST', function(){
+		var req = createFaceRequest(DETECT, 'POST', function(){
 			var res = JSON.parse(this.responseText)
 			console.log("check:" + JSON.stringify(res));
 			if(res && res.length){
@@ -66,6 +70,72 @@
 		req.send(blob);
 	}
 
+	
+	function checkEmotion(){
+		toastr.info('Checking emotion...');
+		//hud.className = "off";
+		var req = createEmotionRequest(EMO_RECOGNIZE, 'POST', function(){
+			var res = JSON.parse(this.responseText)
+			console.log("check:" + JSON.stringify(res));
+			if(res && res.length){
+				var face = res[0];
+				var angerScore = face.scores.anger;
+				var contemptScore = face.scores.contempt;
+				var disgustScore = face.scores.disgust;
+				var fearScore = face.scores.fear;
+				var happinessScore = face.scores.happiness;
+				var neutralScore = face.scores.neutral;
+				var sadnessScore = face.scores.sadness;
+				var surpriseScore = face.scores.surprise;
+				
+				var mood = "anger";
+				var currentScore = angerScore;
+				if (contemptScore > currentScore) {
+					currentScore = contemptScore;
+					mood = "contempt"
+				};
+				if (disgustScore > currentScore) {
+					currentScore = disgustScore;
+					mood = "disgust"
+				};
+				if (fearScore > currentScore) {
+					currentScore = fearScore;
+					mood = "fear"
+				};
+				if (happinessScore > currentScore) {
+					currentScore = happinessScore;
+					mood = "happy"
+				};
+				if (neutralScore > currentScore) {
+					currentScore = neutralScore;
+					mood = "neutral"
+				};
+				if (sadnessScore > currentScore) {
+					currentScore = sadnessScore;
+					mood = "sad"
+				};
+				if (surpriseScore > currentScore) {
+					currentScore = surpriseScore;
+					mood = "surprised"
+				};
+				
+				countUsage(mood);
+				toastr.success('', 'Mood : ' + mood, {timeOut: 10000});
+				
+			} else {
+				toastr.error('No face detected, please try again');
+				hud.className = "";
+			}
+
+			
+		});
+		req.setRequestHeader('Content-Type', 'application\/octet-stream')
+
+		var blob = makeBlob(canvas.toDataURL());
+		req.send(blob);
+	}
+	
+	
 	function checkOrders(customerId){
 		var newReq = new XMLHttpRequest();
 		newReq.open('POST', CHECK_CUSTOMER + '?id=' + encodeURIComponent(customerId), true)
@@ -95,7 +165,7 @@
 	
 	function checkFaceList(id){
 
-		var newReq = createRequest(GET_FACE_LIST, 'GET', function(){
+		var newReq = createFaceRequest(GET_FACE_LIST, 'GET', function(){
 			var res = JSON.parse(this.responseText);
 			console.log(res);
 			var filteredList = res.persistedFaces.filter(function(val){
@@ -115,7 +185,7 @@
 	}
 
 	function checkSimilarFaces(faceId){
-		var newReq = createRequest(FIND_SIMILARS, 'POST', function(){
+		var newReq = createFaceRequest(FIND_SIMILARS, 'POST', function(){
 			var res = JSON.parse(this.responseText);
 			console.log("similar:" + JSON.stringify(res));
 			var mostConfidentHit = res[0];
@@ -165,7 +235,7 @@
 		// Refresh button list in case labels have become available
 	}
 
-	function createRequest(url, method, cb){
+	function createFaceRequest(url, method, cb){
 		console.log(url);
 		var req = new XMLHttpRequest();
 		req.open(method, faceEndpoint+url,true)
@@ -175,6 +245,16 @@
 		return req		
 	}
 
+	function createEmotionRequest(url, method, cb){
+		console.log(url);
+		var req = new XMLHttpRequest();
+		req.open(method, emotionEndpoint+url,true)
+		
+		req.setRequestHeader('Ocp-Apim-Subscription-Key', emotionKey)
+		req.addEventListener('load', cb)
+		return req		
+	}
+	
 	function makeBlob(dataURL) {
 		var BASE64_MARKER = ';base64,';
 		if (dataURL.indexOf(BASE64_MARKER) == -1) {
@@ -214,4 +294,4 @@
     /* init - you can init any event */
     throttle("resize", "optimizedResize");
 
-})(toastr, FACE_API_KEY, FACE_LIST_ID)
+})(toastr, FACE_API_KEY, FACE_LIST_ID, EMOTION_API_KEY )
