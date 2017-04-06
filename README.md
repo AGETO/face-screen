@@ -18,3 +18,6 @@ Start the server:
 `node index.js`
 
 Open browser at `localhost:3000`
+
+
+kudos to https://github.com/kjellivar/bespin-face-bar
