@@ -6,6 +6,12 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+   "engines": {
+        "node": ">=6.9.1"
+    },
+    "scripts": {
+        "start": "node index.js"
+    }
   "author": "",
   "license": "ISC",
   "dependencies": {
@@ -13,3 +19,5 @@
     "request": "^2.81.0"
   }
 }
+
+
